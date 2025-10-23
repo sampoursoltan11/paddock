@@ -13,7 +13,7 @@ import { ComplianceReport } from '../../shared/types';
  */
 export async function getComplianceReport(
   request: HttpRequest,
-  context: InvocationContext
+  _context: InvocationContext
 ): Promise<HttpResponseInit> {
   const correlationId = request.headers.get('X-Correlation-ID') || uuidv4();
 
@@ -26,9 +26,9 @@ export async function getComplianceReport(
 
     logger.info('Get compliance report request', { correlationId, assetId });
 
-    // Check if report exists
-    const reportBlobName = `${assetId}/report.json`;
-    const exists = await blobExists(CONTAINERS.reports, reportBlobName);
+    // Check if compliance report exists (stored in uploads container)
+    const reportBlobName = `${assetId}/compliance-report.json`;
+    const exists = await blobExists(CONTAINERS.uploads, reportBlobName);
 
     if (!exists) {
       logger.warn('Compliance report not found', { correlationId, assetId });
@@ -36,8 +36,36 @@ export async function getComplianceReport(
     }
 
     // Download report from blob storage
-    const reportBuffer = await downloadBlob(CONTAINERS.reports, reportBlobName);
-    const report: ComplianceReport = JSON.parse(reportBuffer.toString('utf-8'));
+    const reportBuffer = await downloadBlob(CONTAINERS.uploads, reportBlobName);
+    const complianceData = JSON.parse(reportBuffer.toString('utf-8'));
+
+    // Transform to ComplianceReport format expected by frontend
+    const report: ComplianceReport = {
+      id: assetId,
+      assetId: assetId,
+      fileName: 'document',
+      processedAt: new Date().toISOString(),
+      overallStatus: complianceData.complianceScore >= 80 ? 'passed' : 'failed',
+      textCompliance: {
+        passed: complianceData.complianceScore >= 80,
+        issues: complianceData.issues || [],
+        rulesChecked: complianceData.totalChecks || 0,
+        rulesPassed: complianceData.passedChecks || 0,
+      },
+      imageCompliance: [],
+      summary: {
+        totalIssues: complianceData.issues?.length || 0,
+        criticalIssues: complianceData.issues?.filter((i: any) => i.severity === 'critical').length || 0,
+        highIssues: complianceData.issues?.filter((i: any) => i.severity === 'high').length || 0,
+        mediumIssues: complianceData.issues?.filter((i: any) => i.severity === 'medium').length || 0,
+        lowIssues: complianceData.issues?.filter((i: any) => i.severity === 'low').length || 0,
+        imagesAnalyzed: 0,
+        pagesProcessed: 1,
+        overallConfidence: complianceData.complianceScore || 0,
+      },
+      issues: complianceData.issues || [],
+      timestamp: new Date().toISOString(),
+    };
 
     logger.info('Compliance report retrieved', {
       correlationId,

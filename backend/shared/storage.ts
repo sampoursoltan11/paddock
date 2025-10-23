@@ -1,5 +1,4 @@
-import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
-import { v4 as uuidv4 } from 'uuid';
+import { BlobServiceClient, ContainerClient, BlobSASPermissions, generateBlobSASQueryParameters, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { BlobUploadResult, WorkflowState } from './types';
 import { logger } from './utils/logger';
 
@@ -112,6 +111,52 @@ export async function blobExists(
   } catch (error) {
     logger.error(`Error checking blob existence: ${error}`);
     return false;
+  }
+}
+
+/**
+ * Generate SAS URL for blob (for GPT-4o Vision to access)
+ */
+export function generateBlobSasUrl(
+  containerName: string,
+  blobName: string,
+  expiresInMinutes: number = 60
+): string {
+  try {
+    const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || '';
+    const accountKey = process.env.AZURE_STORAGE_CONNECTION_STRING?.match(/AccountKey=([^;]+)/)?.[1] || '';
+
+    if (!accountName || !accountKey) {
+      throw new Error('Storage account credentials not found');
+    }
+
+    const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+    const containerClient = getContainerClient(containerName);
+    const blobClient = containerClient.getBlobClient(blobName);
+
+    const sasPermissions = new BlobSASPermissions();
+    sasPermissions.read = true;
+
+    const expiresOn = new Date();
+    expiresOn.setMinutes(expiresOn.getMinutes() + expiresInMinutes);
+
+    const sasToken = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: sasPermissions,
+        expiresOn,
+      },
+      sharedKeyCredential
+    ).toString();
+
+    const sasUrl = `${blobClient.url}?${sasToken}`;
+    logger.info(`Generated SAS URL for blob: ${blobName}`);
+
+    return sasUrl;
+  } catch (error) {
+    logger.error(`Error generating SAS URL: ${error}`);
+    throw error;
   }
 }
 

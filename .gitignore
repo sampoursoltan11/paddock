@@ -81,6 +81,11 @@ playwright-report/
 credentials.json
 secrets/
 
+# Azure Configuration (contains sensitive keys)
+config-*.txt
+get-all-credentials.sh
+deployment-output.json
+
 # Backup files
 *.bak
 *.backup

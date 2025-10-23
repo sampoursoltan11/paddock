@@ -30,6 +30,7 @@ This creates `config-dev.txt` with all values you need.
 | `AZURE_STORAGE_ACCOUNT_NAME` | config-dev.txt | Line: `STORAGE_ACCOUNT_NAME` |
 | `AZURE_OPENAI_ENDPOINT` | config-dev.txt | Line: `AZURE_OPENAI_ENDPOINT` |
 | `AZURE_OPENAI_KEY` | config-dev.txt | Line: `AZURE_OPENAI_KEY` |
+| `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Manual | `text-embedding-ada-002` (for vector search) |
 | `AZURE_AI_SEARCH_ENDPOINT` | config-dev.txt | Line: `AZURE_AI_SEARCH_ENDPOINT` |
 | `AZURE_AI_SEARCH_KEY` | config-dev.txt | Line: `AZURE_AI_SEARCH_KEY` |
 | `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT` | config-dev.txt | Line: `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT` |
@@ -51,8 +52,8 @@ This creates `config-dev.txt` with all values you need.
 
     "AZURE_OPENAI_ENDPOINT": "https://smartproof-openai-dev.openai.azure.com/",
     "AZURE_OPENAI_KEY": "your-key-here",
-    "AZURE_OPENAI_DEPLOYMENT_GPT4": "gpt-4",
-    "AZURE_OPENAI_DEPLOYMENT_GPT4_VISION": "gpt-4-vision",
+    "AZURE_OPENAI_DEPLOYMENT_GPT4": "gpt-4o",
+    "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-ada-002",
 
     "AZURE_AI_SEARCH_ENDPOINT": "https://smartproof-search-dev.search.windows.net",
     "AZURE_AI_SEARCH_KEY": "your-key-here",

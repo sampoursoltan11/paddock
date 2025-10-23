@@ -13,7 +13,7 @@ import { UploadAsset, WorkflowState, AssetStatus } from '../../shared/types';
  */
 export async function uploadAsset(
   request: HttpRequest,
-  context: InvocationContext
+  _context: InvocationContext
 ): Promise<HttpResponseInit> {
   const correlationId = request.headers.get('X-Correlation-ID') || uuidv4();
 

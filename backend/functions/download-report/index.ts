@@ -12,7 +12,7 @@ import { logger } from '../../shared/utils/logger';
  */
 export async function downloadReport(
   request: HttpRequest,
-  context: InvocationContext
+  _context: InvocationContext
 ): Promise<HttpResponseInit> {
   const correlationId = request.headers.get('X-Correlation-ID') || uuidv4();
 

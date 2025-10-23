@@ -1,6 +1,7 @@
 import { app, InvocationContext } from '@azure/functions';
-import { loadWorkflowState, updateAgentResult, CONTAINERS } from '../../shared/storage';
+import { loadWorkflowState, generateBlobSasUrl } from '../../shared/storage';
 import { logger } from '../../shared/utils/logger';
+import { orchestratorAgent } from '../../shared/agents/orchestrator';
 
 /**
  * Azure Function: Process Asset
@@ -9,18 +10,38 @@ import { logger } from '../../shared/utils/logger';
  * Triggered when a new file is uploaded to the uploads container.
  * Initiates the AI agent workflow for compliance checking.
  */
-export async function processAsset(blob: Buffer, context: InvocationContext): Promise<void> {
+export async function processAsset(blob: unknown, context: InvocationContext): Promise<void> {
+  const blobBuffer = blob as Buffer;
   try {
     // Extract uploadId from blob path
-    const blobName = context.triggerMetadata?.name as string;
-    const pathParts = blobName.split('/');
+    // In local development, triggerMetadata.name might be different or undefined
+    const blobName = (context.triggerMetadata?.name || context.triggerMetadata?.blobTrigger || context.triggerMetadata?.uri) as string;
+
+    if (!blobName) {
+      logger.error('Could not determine blob name from trigger metadata', {
+        metadata: context.triggerMetadata,
+      });
+      return;
+    }
+
+    // Extract the relevant path (remove container name if present)
+    let pathParts: string[];
+    if (blobName.includes('uploads/')) {
+      // Extract path after 'uploads/'
+      const uploadsIndex = blobName.indexOf('uploads/');
+      const relevantPath = blobName.substring(uploadsIndex + 'uploads/'.length);
+      pathParts = relevantPath.split('/');
+    } else {
+      pathParts = blobName.split('/');
+    }
+
     const uploadId = pathParts[0];
     const fileName = pathParts[1];
 
     logger.info('Process asset triggered', {
       uploadId,
       fileName,
-      blobSize: blob.length,
+      blobSize: blobBuffer.length,
     });
 
     // Load workflow state
@@ -30,33 +51,21 @@ export async function processAsset(blob: Buffer, context: InvocationContext): Pr
       return;
     }
 
-    // Update orchestrator agent status to processing
-    await updateAgentResult(uploadId, 'orchestrator', {
-      message: 'Starting processing workflow',
-      fileName,
-      fileSize: blob.length,
-    }, 'processing');
+    // Generate SAS URL for the blob so GPT-4o Vision can access it
+    const blobPath = `${uploadId}/${fileName}`;
+    const blobUrl = generateBlobSasUrl('uploads', blobPath, 120); // 2 hour expiry
 
-    // TODO: In a full implementation, this would:
-    // 1. Call Orchestrator Agent to coordinate workflow
-    // 2. Orchestrator triggers Parser Agent
-    // 3. Parser extracts text, tables, images
-    // 4. Image Analysis Agent processes images
-    // 5. Search Agent retrieves product info
-    // 6. Compliance Agent checks rules
-    // 7. Critic Agent generates final report
-
-    // For now, we'll create a placeholder message
-    logger.info('Workflow initiated - agents will process asynchronously', {
+    logger.info('Starting orchestrator agent', {
       uploadId,
-      agents: Object.keys(workflowState.agents),
+      fileName,
+      blobUrl: blobUrl.substring(0, 100) + '...', // Log truncated URL for security
     });
 
-    // Update orchestrator to completed (temporary for PoC)
-    await updateAgentResult(uploadId, 'orchestrator', {
-      message: 'Orchestrator completed - workflow queued',
-      nextAgent: 'parser',
-    }, 'completed');
+    // Call the orchestrator agent to run the full AI workflow
+    // This will coordinate: Parser → Image Analysis → Compliance → Report Generation
+    await orchestratorAgent(uploadId, fileName, blobUrl);
+
+    logger.info('Orchestrator agent completed', { uploadId });
 
   } catch (error) {
     logger.error('Error processing asset', {

@@ -1,64 +1,59 @@
-import { ComputerVisionClient } from '@azure/cognitiveservices-computervision';
-import { ApiKeyCredentials } from '@azure/ms-rest-js';
+/**
+ * Vision utilities - Now using GPT-4o Vision instead of Azure Computer Vision
+ * This file provides backward compatibility by wrapping GPT-4o Vision calls
+ */
 import { logger } from './utils/logger';
-
-const endpoint = process.env.AZURE_COMPUTER_VISION_ENDPOINT || '';
-const key = process.env.AZURE_COMPUTER_VISION_KEY || '';
-
-// Initialize Computer Vision client
-const credentials = new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } });
-const visionClient = new ComputerVisionClient(credentials, endpoint);
+import * as openai from './openai';
 
 /**
- * Analyze image using Azure Computer Vision
+ * Extract structured data from document using GPT-4o
+ * Re-exported for convenience
+ */
+export { extractStructuredData } from './openai';
+
+/**
+ * Analyze image using GPT-4o Vision (backward compatibility wrapper)
  */
 export async function analyzeImage(imageUrl: string) {
   try {
-    logger.info('Analyzing image with Computer Vision', { imageUrl });
+    logger.info('Analyzing image with GPT-4o Vision', { imageUrl });
 
-    const analysis = await visionClient.analyzeImage(imageUrl, {
-      visualFeatures: [
-        'Categories',
-        'Description',
-        'Color',
-        'ImageType',
-        'Objects',
-        'Brands',
-        'Adult',
-      ],
-      details: ['Landmarks'],
-    });
+    const prompt = `Analyze this image and return a JSON object with:
+{
+  "description": "detailed description",
+  "confidence": 0.95,
+  "dominantColors": ["#RRGGBB", ...],
+  "accentColor": "#RRGGBB",
+  "objects": [{"name": "object", "confidence": 0.9, "rectangle": {"x": 0, "y": 0, "width": 100, "height": 100}}],
+  "brands": [{"name": "brand", "confidence": 0.9, "rectangle": {...}}],
+  "imageType": {"clipArtType": 0, "lineDrawingType": 0},
+  "categories": [{"name": "category", "score": 0.8}]
+}`;
 
-    logger.info('Image analysis completed', {
-      imageUrl,
-      objectsDetected: analysis.objects?.length || 0,
-      brandsDetected: analysis.brands?.length || 0,
-    });
+    const result = await openai.analyzeDocument(imageUrl, prompt);
 
-    return {
-      description: analysis.description?.captions?.[0]?.text || '',
-      confidence: analysis.description?.captions?.[0]?.confidence || 0,
-      dominantColors: analysis.color?.dominantColors || [],
-      accentColor: analysis.color?.accentColor,
-      objects: analysis.objects?.map((obj) => ({
-        name: obj.object || '',
-        confidence: obj.confidence || 0,
-        rectangle: obj.rectangle,
-      })) || [],
-      brands: analysis.brands?.map((brand) => ({
-        name: brand.name || '',
-        confidence: brand.confidence || 0,
-        rectangle: brand.rectangle,
-      })) || [],
-      imageType: {
-        clipArtType: analysis.imageType?.clipArtType || 0,
-        lineDrawingType: analysis.imageType?.lineDrawingType || 0,
-      },
-      categories: analysis.categories?.map((cat) => ({
-        name: cat.name || '',
-        score: cat.score || 0,
-      })) || [],
-    };
+    try {
+      const parsed = JSON.parse(result);
+      logger.info('Image analysis completed', {
+        imageUrl,
+        objectsDetected: parsed.objects?.length || 0,
+        brandsDetected: parsed.brands?.length || 0,
+      });
+      return parsed;
+    } catch {
+      // Fallback structure
+      logger.warn('GPT-4o did not return valid JSON, using fallback structure');
+      return {
+        description: result,
+        confidence: 0,
+        dominantColors: [],
+        accentColor: '#000000',
+        objects: [],
+        brands: [],
+        imageType: { clipArtType: 0, lineDrawingType: 0 },
+        categories: [],
+      };
+    }
   } catch (error) {
     logger.error('Error analyzing image', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -69,47 +64,20 @@ export async function analyzeImage(imageUrl: string) {
 }
 
 /**
- * Extract text from image using OCR
+ * Extract text from image using GPT-4o Vision OCR
  */
 export async function extractTextFromImage(imageUrl: string): Promise<string> {
   try {
-    logger.info('Extracting text from image with OCR', { imageUrl });
+    logger.info('Extracting text from image with GPT-4o Vision OCR', { imageUrl });
 
-    const result = await visionClient.read(imageUrl);
-    const operationId = result.operationLocation.split('/').pop();
-
-    if (!operationId) {
-      throw new Error('Failed to get operation ID from OCR result');
-    }
-
-    // Wait for OCR operation to complete
-    let readResult = await visionClient.getReadResult(operationId);
-    while (readResult.status === 'running' || readResult.status === 'notStarted') {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      readResult = await visionClient.getReadResult(operationId);
-    }
-
-    if (readResult.status !== 'succeeded') {
-      throw new Error(`OCR operation failed with status: ${readResult.status}`);
-    }
-
-    // Extract text from all pages
-    const extractedText: string[] = [];
-    for (const page of readResult.analyzeResult?.readResults || []) {
-      for (const line of page.lines || []) {
-        extractedText.push(line.text || '');
-      }
-    }
-
-    const fullText = extractedText.join('\n');
+    const text = await openai.extractTextFromImage(imageUrl);
 
     logger.info('Text extraction completed', {
       imageUrl,
-      textLength: fullText.length,
-      linesExtracted: extractedText.length,
+      textLength: text.length,
     });
 
-    return fullText;
+    return text;
 
   } catch (error) {
     logger.error('Error extracting text from image', {
@@ -121,21 +89,13 @@ export async function extractTextFromImage(imageUrl: string): Promise<string> {
 }
 
 /**
- * Detect logos in image (for Toyota logo detection)
+ * Detect logos in image using GPT-4o Vision
  */
 export async function detectLogos(imageUrl: string) {
   try {
-    logger.info('Detecting logos in image', { imageUrl });
+    logger.info('Detecting logos in image with GPT-4o Vision', { imageUrl });
 
-    const analysis = await visionClient.analyzeImage(imageUrl, {
-      visualFeatures: ['Brands'],
-    });
-
-    const logos = analysis.brands?.map((brand) => ({
-      name: brand.name || '',
-      confidence: brand.confidence || 0,
-      rectangle: brand.rectangle,
-    })) || [];
+    const logos = await openai.detectLogos(imageUrl);
 
     logger.info('Logo detection completed', {
       imageUrl,
@@ -154,22 +114,20 @@ export async function detectLogos(imageUrl: string) {
 }
 
 /**
- * Check image quality metrics
+ * Check image quality using GPT-4o Vision
  */
 export async function checkImageQuality(imageUrl: string) {
   try {
-    logger.info('Checking image quality', { imageUrl });
+    logger.info('Checking image quality with GPT-4o Vision', { imageUrl });
 
-    const analysis = await visionClient.analyzeImage(imageUrl, {
-      visualFeatures: ['ImageType', 'Color'],
-    });
+    const quality = await openai.checkImageQuality(imageUrl);
 
     return {
-      isBlackAndWhite: analysis.color?.isBWImg || false,
-      dominantColors: analysis.color?.dominantColors || [],
-      accentColor: analysis.color?.accentColor,
-      isClipart: (analysis.imageType?.clipArtType || 0) > 0,
-      isLineDrawing: (analysis.imageType?.lineDrawingType || 0) > 0,
+      isBlackAndWhite: quality.isBlackAndWhite || false,
+      dominantColors: quality.dominantColors || [],
+      accentColor: quality.accentColor || '#000000',
+      isClipart: quality.isClipart || false,
+      isLineDrawing: quality.isLineDrawing || false,
     };
 
   } catch (error) {

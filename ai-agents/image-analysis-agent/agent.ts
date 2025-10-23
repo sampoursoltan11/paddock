@@ -1,11 +1,11 @@
 import { BaseAgent } from '../shared/base-agent';
-import { analyzeImage, detectLogos, checkImageQuality } from '../../backend/shared/vision';
+import { analyzeImageCompliance } from '../../backend/shared/openai';
 import * as fs from 'fs';
 import * as path from 'path';
 
 /**
  * Image Analysis Agent
- * Analyzes images for visual compliance using Computer Vision and GPT-4V
+ * Analyzes images for visual compliance using GPT-4o Vision
  */
 export class ImageAnalysisAgent extends BaseAgent {
   private logoSpecs: any;
@@ -81,68 +81,97 @@ export class ImageAnalysisAgent extends BaseAgent {
   }
 
   /**
-   * Analyze a single image
+   * Analyze a single image using GPT-4o Vision
    */
   private async analyzeImage(image: any): Promise<any> {
     this.log(`Analyzing image: ${image.imageId}`);
 
-    // For PoC, we'll create placeholder analysis
-    // In production, call Computer Vision API and GPT-4V
-    // const visionResult = await analyzeImage(imageUrl);
-    // const logos = await detectLogos(imageUrl);
-    // const quality = await checkImageQuality(imageUrl);
-
-    // Placeholder implementation
-    const analysis = {
-      imageId: image.imageId,
-      imagePath: image.blobPath,
-      pageNumber: image.pageNumber,
-      passed: true,
-      analysis: {
-        logoDetected: true,
-        logoPosition: {
-          x: 150,
-          y: 50,
-          width: 120,
-          height: 60,
-          confidence: 0.92,
-        },
-        imageQuality: {
-          resolution: '1200x800',
-          dpi: 150,
-          isBlurry: false,
-          qualityScore: 0.85,
-        },
-        dominantColors: ['#EB0A1E', '#FFFFFF', '#000000'],
-        objectsDetected: ['vehicle', 'logo', 'text'],
-        textInImage: 'New Toyota Camry 2024',
-        brandCompliance: {
-          logoUsage: 'correct',
-          colorConsistency: 'brand colors detected',
-          visualStyle: 'professional',
-          issues: ['Resolution below 300 DPI for print materials'],
-        },
-      },
-      issues: [
+    try {
+      // Use GPT-4o Vision to analyze image compliance
+      const complianceResult = await analyzeImageCompliance(
+        image.blobPath,
         {
-          id: `${image.imageId}_001`,
-          severity: 'medium' as const,
-          category: 'image_quality' as const,
-          message: 'Image resolution (150 DPI) below recommended 300 DPI for print',
-          location: `Page ${image.pageNumber}, Image ${image.imageId}`,
-          suggestion: 'Replace with higher resolution image (300+ DPI)',
-          confidence: 0.95,
-          ruleId: 'IMG_QUALITY_001',
+          logoSpecs: this.logoSpecs,
+          brandColors: this.brandColors,
+          qualityStandards: this.qualityStandards,
+        }
+      );
+
+      // Structure the analysis result
+      const analysis = {
+        imageId: image.imageId,
+        imagePath: image.blobPath,
+        pageNumber: image.pageNumber,
+        passed: true,
+        analysis: {
+          logoDetected: complianceResult.logoDetected || false,
+          logoPosition: complianceResult.logoPosition || null,
+          imageQuality: complianceResult.imageQuality || {
+            resolution: 'unknown',
+            dpi: 0,
+            isBlurry: false,
+            qualityScore: 0,
+          },
+          dominantColors: complianceResult.dominantColors || [],
+          objectsDetected: complianceResult.objectsDetected || [],
+          textInImage: complianceResult.textInImage || '',
+          brandCompliance: complianceResult.brandCompliance || {
+            logoUsage: 'unknown',
+            colorConsistency: 'unknown',
+            visualStyle: 'unknown',
+            issues: [],
+          },
         },
-      ],
-    };
+        issues: complianceResult.issues || [],
+      };
 
-    // Update passed status based on issues
-    analysis.passed = !analysis.issues.some(
-      (issue) => issue.severity === 'critical' || issue.severity === 'high'
-    );
+      // Update passed status based on issues
+      analysis.passed = !analysis.issues.some(
+        (issue: any) => issue.severity === 'critical' || issue.severity === 'high'
+      );
 
-    return analysis;
+      return analysis;
+
+    } catch (error) {
+      this.log('Error analyzing image', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        imageId: image.imageId,
+      });
+
+      // Return a failed analysis on error
+      return {
+        imageId: image.imageId,
+        imagePath: image.blobPath,
+        pageNumber: image.pageNumber,
+        passed: false,
+        analysis: {
+          logoDetected: false,
+          logoPosition: null,
+          imageQuality: { resolution: 'unknown', dpi: 0, isBlurry: false, qualityScore: 0 },
+          dominantColors: [],
+          objectsDetected: [],
+          textInImage: '',
+          brandCompliance: {
+            logoUsage: 'error',
+            colorConsistency: 'error',
+            visualStyle: 'error',
+            issues: [],
+          },
+        },
+        issues: [
+          {
+            id: `${image.imageId}_error`,
+            severity: 'critical' as const,
+            category: 'analysis_error' as const,
+            message: `Failed to analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            location: `Page ${image.pageNumber}, Image ${image.imageId}`,
+            suggestion: 'Check image format and try again',
+            confidence: 1.0,
+            ruleId: 'ANALYSIS_ERROR',
+          },
+        ],
+      };
+    }
   }
 }
 

@@ -73,4 +73,5 @@ resource stateContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
 
 output storageAccountName string = storageAccount.name
 output storageAccountId string = storageAccount.id
-output storageAccountConnectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
+// Connection string retrieved via Azure CLI to avoid listKeys() issues
+// output storageAccountConnectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'

@@ -1,13 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { SearchClient, AzureKeyCredential } from '@azure/search-documents';
 import { v4 as uuidv4 } from 'uuid';
 import { successResponse, errorResponse, validationErrorResponse } from '../../shared/utils/response';
 import { logger } from '../../shared/utils/logger';
-import { ProductSearchQuery, ProductSearchResult } from '../../shared/types';
-
-const searchEndpoint = process.env.AZURE_AI_SEARCH_ENDPOINT || '';
-const searchKey = process.env.AZURE_AI_SEARCH_KEY || '';
-const indexName = process.env.AZURE_AI_SEARCH_INDEX_NAME || 'smartproof-product-info';
+import { ProductSearchQuery } from '../../shared/types';
+import { searchKnowledgeBase } from '../../shared/knowledgeBase';
 
 /**
  * Azure Function: Search Product
@@ -17,7 +13,7 @@ const indexName = process.env.AZURE_AI_SEARCH_INDEX_NAME || 'smartproof-product-
  */
 export async function searchProduct(
   request: HttpRequest,
-  context: InvocationContext
+  _context: InvocationContext
 ): Promise<HttpResponseInit> {
   const correlationId = request.headers.get('X-Correlation-ID') || uuidv4();
 
@@ -58,54 +54,22 @@ export async function searchProduct(
       },
     });
 
-    // Initialize Azure AI Search client
-    const searchClient = new SearchClient(
-      searchEndpoint,
-      indexName,
-      new AzureKeyCredential(searchKey)
-    );
+    // Check if vector search should be used (for natural language queries)
+    const useVectorSearch = request.query.get('useVector') === 'true' || request.method === 'POST';
 
-    // Build filter expression
-    const filters: string[] = [];
-    if (searchQuery.model) {
-      filters.push(`model eq '${searchQuery.model}'`);
-    }
-    if (searchQuery.year) {
-      filters.push(`year eq '${searchQuery.year}'`);
-    }
-    if (searchQuery.category) {
-      filters.push(`category eq '${searchQuery.category}'`);
-    }
-
-    // Execute search
-    const searchResults = await searchClient.search(searchQuery.query, {
-      filter: filters.length > 0 ? filters.join(' and ') : undefined,
+    // Execute search using knowledge base
+    const results = await searchKnowledgeBase(searchQuery.query, {
+      model: searchQuery.model,
+      year: searchQuery.year,
+      category: searchQuery.category,
       top: 10,
-      includeTotalCount: true,
-      queryType: 'semantic',
-      semanticConfiguration: 'default',
-      select: ['id', 'title', 'content', 'model', 'year', 'category', 'source'],
+      useVectorSearch,
     });
-
-    // Transform results
-    const results: ProductSearchResult[] = [];
-    for await (const result of searchResults.results) {
-      results.push({
-        id: result.document.id as string,
-        title: result.document.title as string,
-        content: result.document.content as string,
-        model: result.document.model as string,
-        year: result.document.year as string,
-        category: result.document.category as string,
-        relevanceScore: result.score || 0,
-        source: result.document.source as string,
-      });
-    }
 
     logger.info('Search completed', {
       correlationId,
       resultsCount: results.length,
-      totalCount: searchResults.count,
+      useVectorSearch,
     });
 
     return successResponse(results);

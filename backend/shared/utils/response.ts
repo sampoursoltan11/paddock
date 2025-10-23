@@ -1,4 +1,4 @@
-import { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { HttpResponseInit } from '@azure/functions';
 import { ApiResponse } from '../types';
 
 /**

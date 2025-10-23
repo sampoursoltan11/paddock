@@ -1,10 +1,11 @@
 import { BaseAgent } from '../shared/base-agent';
 import { getContainerClient, uploadBlob, CONTAINERS } from '../../backend/shared/storage';
+import { extractStructuredData } from '../../backend/shared/openai';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Parser Agent
- * Extracts text, tables, and images from PDF documents using Azure Document Intelligence
+ * Extracts text, tables, and images from PDF documents using GPT-4o
  */
 export class ParserAgent extends BaseAgent {
   constructor(uploadId: string) {
@@ -65,74 +66,36 @@ export class ParserAgent extends BaseAgent {
   }
 
   /**
-   * Parse document using Azure Document Intelligence
-   * TODO: Replace with actual Azure Document Intelligence SDK call
+   * Parse document using GPT-4o Vision
    */
   private async parseDocument(blobUrl: string): Promise<any> {
-    // Placeholder implementation
-    // In production, use:
-    // import { DocumentAnalysisClient } from '@azure/ai-document-intelligence';
+    this.log('Parsing document with GPT-4o', { blobUrl });
 
-    this.log('Parsing document (placeholder)', { blobUrl });
+    try {
+      // Extract structured data using GPT-4o
+      const extracted = await extractStructuredData(blobUrl);
 
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Return placeholder data structure
-    return {
-      uploadId: this.uploadId,
-      sourceUrl: blobUrl,
-      pageCount: 5,
-      extractedText: `
-Toyota Camry 2024 - Marketing Brochure
-
-The all-new 2024 Toyota Camry delivers exceptional performance and style.
-With advanced safety features and hybrid technology, it's the perfect choice
-for modern drivers.
-
-Key Features:
-- 2.5L 4-cylinder engine
-- Toyota Safety Sense 3.0
-- 8-inch touchscreen display
-- Apple CarPlay and Android Auto
-
-Specifications:
-Model: Camry XLE
-Year: 2024
-Engine: 2.5L 4-Cylinder
-Horsepower: 203 hp
-MPG: 28 city / 39 highway
-
-*Vehicle shown with optional equipment. Actual vehicle may vary.
-      `.trim(),
-      extractedTables: [
-        {
-          id: 'table_001',
-          pageNumber: 3,
-          headers: ['Feature', 'Standard', 'Premium'],
-          rows: [
-            ['Adaptive Cruise Control', 'Yes', 'Yes'],
-            ['Leather Seats', 'No', 'Yes'],
-            ['Moonroof', 'No', 'Yes'],
-          ],
-        },
-      ],
-      extractedImages: [
-        {
-          imageId: 'img_001',
-          blobPath: `${CONTAINERS.processed}/${this.uploadId}/images/page1_img1.jpg`,
-          pageNumber: 1,
-          position: { x: 100, y: 200, width: 400, height: 300 },
-        },
-        {
-          imageId: 'img_002',
-          blobPath: `${CONTAINERS.processed}/${this.uploadId}/images/page2_img1.jpg`,
-          pageNumber: 2,
-          position: { x: 50, y: 100, width: 500, height: 400 },
-        },
-      ],
-      processedAt: new Date().toISOString(),
-    };
+      // Return structured result
+      return {
+        uploadId: this.uploadId,
+        sourceUrl: blobUrl,
+        pageCount: extracted.pageCount || 1,
+        extractedText: extracted.extractedText || '',
+        extractedTables: extracted.extractedTables || [],
+        extractedImages: (extracted.extractedImages || []).map((img: any, index: number) => ({
+          imageId: img.imageId || `img_${String(index + 1).padStart(3, '0')}`,
+          blobPath: `${CONTAINERS.processed}/${this.uploadId}/images/${img.imageId || `page${img.pageNumber}_img${index + 1}`}.jpg`,
+          pageNumber: img.pageNumber || 1,
+          position: img.position || { x: 0, y: 0, width: 0, height: 0 },
+        })),
+        processedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.log('Error parsing document with GPT-4o', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 }
 

@@ -89,14 +89,14 @@ cd /path/to/smartproof-poc
 - Azure Functions
 - App Service (Frontend)
 - Azure AI Search
-- Azure Document Intelligence
-- Azure Computer Vision
-- Azure OpenAI (GPT-4 + GPT-4 Vision)
+- Azure OpenAI (GPT-4o with vision capabilities)
 - Application Insights
+
+**Note:** Document Intelligence and Computer Vision are NOT required. GPT-4o handles all document parsing and image analysis.
 
 **Estimated time:** 10-15 minutes
 
-**Estimated cost:** ~$235-450/month (dev environment)
+**Estimated cost:** ~$50-150/month (dev environment) - Significantly lower without Document Intelligence and Computer Vision
 
 ### Step 3: Review Generated Config
 
@@ -135,18 +135,11 @@ cat config-dev.txt
 
     "AZURE_OPENAI_ENDPOINT": "<from config-dev.txt>",
     "AZURE_OPENAI_KEY": "<from config-dev.txt>",
-    "AZURE_OPENAI_DEPLOYMENT_GPT4": "gpt-4",
-    "AZURE_OPENAI_DEPLOYMENT_GPT4_VISION": "gpt-4-vision",
+    "AZURE_OPENAI_DEPLOYMENT_GPT4": "gpt-4o",
 
     "AZURE_AI_SEARCH_ENDPOINT": "<from config-dev.txt>",
     "AZURE_AI_SEARCH_KEY": "<from config-dev.txt>",
     "AZURE_AI_SEARCH_INDEX_NAME": "smartproof-product-info",
-
-    "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT": "<from config-dev.txt>",
-    "AZURE_DOCUMENT_INTELLIGENCE_KEY": "<from config-dev.txt>",
-
-    "AZURE_COMPUTER_VISION_ENDPOINT": "<from config-dev.txt>",
-    "AZURE_COMPUTER_VISION_KEY": "<from config-dev.txt>",
 
     "AZURE_AD_TENANT_ID": "<your-tenant-id>",
     "AZURE_AD_CLIENT_ID": "<your-client-id>",

@@ -14,30 +14,22 @@ SmartProof AI is an intelligent compliance checking system for Toyota marketing 
 
 ---
 
-## ⚡ Two-Step Quickstart
+## ⚡ Quickstart Options
 
-### Step 1: Run Provisioning (15 minutes)
+### Option 1: One-Command Deploy (Recommended - 20-25 minutes)
 
 ```bash
 # 1. Login to Azure
 az login
 
-# 2. Provision all Azure resources
-./scripts/provision-azure-resources.sh dev
+# 2. Run complete deployment script
+./scripts/deploy-local.sh dev
 
-# This creates config-dev.txt with all connection strings
-```
-
-### Step 2: Configure & Run (5 minutes)
-
-```bash
-# 1. Setup dependencies
-./scripts/setup-local.sh
-
-# 2. Copy values from config-dev.txt to:
-#    - backend/local.settings.json
-#    - frontend/.env
-# See: WHERE_TO_CONFIGURE.md for exact mappings
+# This will:
+# - Provision all Azure resources
+# - Create text-embedding-ada-002 deployment
+# - Install dependencies
+# - Configure all settings automatically
 
 # 3. Start backend (Terminal 1)
 cd backend && npm start
@@ -46,6 +38,47 @@ cd backend && npm start
 cd frontend && npm run dev
 
 # 5. Open browser: http://localhost:3000
+```
+
+**Done!** 🎉
+
+### Option 2: Manual Step-by-Step (15-20 minutes)
+
+```bash
+# 1. Login to Azure
+az login
+
+# 2. Provision all Azure resources
+./scripts/provision-azure-resources.sh dev
+# This creates config-dev.txt with all connection strings
+
+# 3. Create text-embedding-ada-002 deployment
+# (Required for knowledge base vector search)
+az cognitiveservices account deployment create \
+  --name smartproof-openai-dev \
+  --resource-group smartproof-rg-dev \
+  --deployment-name text-embedding-ada-002 \
+  --model-name text-embedding-ada-002 \
+  --model-version "2" \
+  --model-format OpenAI \
+  --sku-capacity 10 \
+  --sku-name "Standard"
+
+# 4. Setup dependencies
+./scripts/setup-local.sh
+
+# 5. Copy values from config-dev.txt to:
+#    - backend/local.settings.json (add AZURE_OPENAI_EMBEDDING_DEPLOYMENT)
+#    - frontend/.env
+# See: WHERE_TO_CONFIGURE.md for exact mappings
+
+# 6. Start backend (Terminal 1)
+cd backend && npm start
+
+# 7. Start frontend (Terminal 2)
+cd frontend && npm run dev
+
+# 8. Open browser: http://localhost:3000
 ```
 
 **Done!** 🎉
