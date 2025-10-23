@@ -65,8 +65,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   ];
 
   const drawer = (
-    <Box>
-      <Toolbar sx={{ backgroundColor: 'primary.main', color: 'white' }}>
+    <Box sx={{ backgroundColor: '#e3f2fd', minHeight: '100vh' }}>
+      <Toolbar sx={{ backgroundColor: '#cad6e3ff', color: 'white' }}>
         <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
           SmartProof AI
         </Typography>
@@ -82,11 +82,34 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 if (mobileOpen) handleDrawerToggle();
               }}
               sx={{
+                color: '#4c6d7eff',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                  color: '#1565c0',
+                  '& .MuiListItemIcon-root': {
+                    color: '#1565c0',
+                  },
+                  '& .MuiListItemText-primary': {
+                    fontWeight: 600,
+                  },
+                },
                 '&.Mui-selected': {
-                  backgroundColor: 'primary.light',
-                  color: 'white',
+                  backgroundColor: '#83969fff',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  '& .MuiListItemIcon-root': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiListItemText-primary': {
+                    fontWeight: 600,
+                  },
                   '&:hover': {
-                    backgroundColor: 'primary.main',
+                    backgroundColor: '#369ed3ff',
+                    color: '#ffffff',
+                    '& .MuiListItemIcon-root': {
+                      color: '#ffffff',
+                    },
                   },
                 },
                 mx: 1,
@@ -96,12 +119,18 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             >
               <ListItemIcon
                 sx={{
-                  color: location.pathname === item.path ? 'white' : 'text.secondary',
+                  color: location.pathname === item.path ? '#ffffff' : '#263238',
+                  minWidth: 40,
                 }}
               >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.text} />
+              <ListItemText
+                primary={item.text}
+                primaryTypographyProps={{
+                  fontSize: '0.95rem',
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
