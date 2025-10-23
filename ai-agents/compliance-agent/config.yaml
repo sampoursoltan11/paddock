@@ -1,0 +1,25 @@
+# Compliance Agent Configuration
+
+name: compliance
+description: Checks marketing materials against brand, legal, and PIT rules
+version: 1.0.0
+
+# Rule files to load
+rules:
+  - brand-rules.json
+  - legal-rules.json
+  - pit-rules.json
+  - image-rules.json
+
+# GPT settings for complex rule evaluation
+gpt:
+  model: gpt-4
+  max_tokens: 2000
+  temperature: 0.1  # Low temperature for consistent rule application
+
+# Confidence thresholds
+thresholds:
+  critical_min: 0.9
+  high_min: 0.8
+  medium_min: 0.7
+  low_min: 0.6

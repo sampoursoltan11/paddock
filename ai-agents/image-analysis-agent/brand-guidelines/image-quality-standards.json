@@ -1,0 +1,63 @@
+{
+  "image_quality_standards": {
+    "resolution": {
+      "print": {
+        "minimum_dpi": 300,
+        "recommended_dpi": 600,
+        "description": "For printed marketing materials"
+      },
+      "digital": {
+        "minimum_dpi": 150,
+        "recommended_dpi": 300,
+        "description": "For digital displays and presentations"
+      },
+      "web": {
+        "minimum_dpi": 72,
+        "recommended_dpi": 150,
+        "description": "For web and social media"
+      }
+    },
+    "dimensions": {
+      "minimum_width_pixels": 800,
+      "minimum_height_pixels": 600,
+      "aspect_ratios": {
+        "standard": "16:9",
+        "portrait": "9:16",
+        "square": "1:1"
+      }
+    },
+    "file_properties": {
+      "max_file_size_mb": 10,
+      "allowed_formats": ["jpg", "jpeg", "png", "tiff"],
+      "compression": "High quality (85-100%)"
+    },
+    "visual_quality": {
+      "blur_threshold": 0.7,
+      "noise_threshold": 0.3,
+      "brightness_range": [0.2, 0.8],
+      "contrast_minimum": 0.4
+    }
+  },
+  "validation_rules": [
+    {
+      "rule_id": "IMG_QUALITY_001",
+      "description": "Images must meet minimum DPI requirements for intended use",
+      "severity": "high"
+    },
+    {
+      "rule_id": "IMG_QUALITY_002",
+      "description": "Images must not be blurry or pixelated",
+      "severity": "high"
+    },
+    {
+      "rule_id": "IMG_QUALITY_003",
+      "description": "Images must have adequate brightness and contrast",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "IMG_QUALITY_004",
+      "description": "Images must be in approved file formats",
+      "severity": "low"
+    }
+  ]
+}

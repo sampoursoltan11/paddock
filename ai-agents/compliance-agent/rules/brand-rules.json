@@ -1,0 +1,49 @@
+{
+  "brand_compliance_rules": [
+    {
+      "rule_id": "BRAND_001",
+      "category": "brand",
+      "severity": "critical",
+      "title": "Toyota logo must be present",
+      "description": "All marketing materials must display the official Toyota logo",
+      "check_type": "presence",
+      "target": "logo",
+      "remediation": "Add official Toyota logo to the marketing material"
+    },
+    {
+      "rule_id": "BRAND_002",
+      "category": "brand",
+      "severity": "high",
+      "title": "Brand name must be capitalized correctly",
+      "description": "Toyota must always be capitalized as 'Toyota', never 'TOYOTA' or 'toyota'",
+      "check_type": "pattern",
+      "pattern": "\\bToyota\\b",
+      "anti_pattern": "\\b(TOYOTA|toyota)\\b",
+      "remediation": "Correct brand name capitalization to 'Toyota'"
+    },
+    {
+      "rule_id": "BRAND_003",
+      "category": "brand",
+      "severity": "high",
+      "title": "Tagline must be official",
+      "description": "If tagline is used, it must be an approved Toyota tagline",
+      "check_type": "whitelist",
+      "approved_taglines": [
+        "Let's Go Places",
+        "Start Your Impossible",
+        "Built for the Long Haul"
+      ],
+      "remediation": "Use only approved Toyota taglines"
+    },
+    {
+      "rule_id": "BRAND_004",
+      "category": "brand",
+      "severity": "medium",
+      "title": "Font usage must be approved",
+      "description": "Only Toyota-approved fonts should be used in marketing materials",
+      "check_type": "visual",
+      "approved_fonts": ["Toyota Display", "Toyota Text", "Helvetica", "Arial"],
+      "remediation": "Use approved Toyota fonts"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+# Critic Agent Configuration
+
+name: critic
+description: Validates all agent results and generates final compliance report
+version: 1.0.0
+
+# Report generation settings
+report:
+  formats:
+    - html
+    - pdf
+  include_screenshots: true
+  include_recommendations: true
+  confidence_indicators: true
+
+# GPT settings for report generation
+gpt:
+  model: gpt-4
+  max_tokens: 3000
+  temperature: 0.2

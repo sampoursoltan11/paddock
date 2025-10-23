@@ -1,0 +1,66 @@
+{
+  "toyota_brand_colors": {
+    "primary": {
+      "name": "Toyota Red",
+      "hex": "#EB0A1E",
+      "rgb": [235, 10, 30],
+      "cmyk": [0, 96, 87, 8],
+      "usage": "Primary brand color for logos and accents",
+      "tolerance_percentage": 5
+    },
+    "secondary": [
+      {
+        "name": "Black",
+        "hex": "#000000",
+        "rgb": [0, 0, 0],
+        "cmyk": [0, 0, 0, 100],
+        "usage": "Text, logo variations"
+      },
+      {
+        "name": "White",
+        "hex": "#FFFFFF",
+        "rgb": [255, 255, 255],
+        "cmyk": [0, 0, 0, 0],
+        "usage": "Backgrounds, reverse text"
+      },
+      {
+        "name": "Dark Gray",
+        "hex": "#58595B",
+        "rgb": [88, 89, 91],
+        "cmyk": [0, 0, 0, 64],
+        "usage": "Secondary text, borders"
+      }
+    ],
+    "accent_colors": [
+      {
+        "name": "Silver",
+        "hex": "#C0C0C0",
+        "rgb": [192, 192, 192],
+        "usage": "Accents, vehicle colors"
+      },
+      {
+        "name": "Blue",
+        "hex": "#003DA5",
+        "rgb": [0, 61, 165],
+        "usage": "Technology features, hybrid indicators"
+      }
+    ]
+  },
+  "color_validation_rules": [
+    {
+      "rule_id": "COLOR_001",
+      "description": "Dominant colors must be from approved brand palette",
+      "severity": "high"
+    },
+    {
+      "rule_id": "COLOR_002",
+      "description": "Toyota Red must be within tolerance range",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "COLOR_003",
+      "description": "Non-brand colors should not exceed 20% of image",
+      "severity": "low"
+    }
+  ]
+}

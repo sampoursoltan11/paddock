@@ -1,0 +1,66 @@
+{
+  "logo_requirements": {
+    "minimum_size": {
+      "width_pixels": 100,
+      "height_pixels": 50
+    },
+    "clear_space": {
+      "description": "Minimum clear space around logo should be 25% of logo height",
+      "percentage": 25
+    },
+    "acceptable_formats": ["svg", "png", "jpg"],
+    "prohibited_modifications": [
+      "stretched",
+      "rotated",
+      "recolored",
+      "distorted",
+      "overlaid_with_text"
+    ]
+  },
+  "logo_colors": {
+    "primary_red": {
+      "hex": "#EB0A1E",
+      "rgb": [235, 10, 30],
+      "tolerance": 10
+    },
+    "black": {
+      "hex": "#000000",
+      "rgb": [0, 0, 0]
+    },
+    "white": {
+      "hex": "#FFFFFF",
+      "rgb": [255, 255, 255]
+    }
+  },
+  "logo_placement": {
+    "preferred_positions": [
+      "top_left",
+      "top_center",
+      "bottom_left",
+      "bottom_center"
+    ],
+    "minimum_margin_pixels": 20
+  },
+  "validation_rules": [
+    {
+      "rule_id": "LOGO_001",
+      "description": "Toyota logo must be present on all marketing materials",
+      "severity": "critical"
+    },
+    {
+      "rule_id": "LOGO_002",
+      "description": "Logo must not be modified or distorted",
+      "severity": "critical"
+    },
+    {
+      "rule_id": "LOGO_003",
+      "description": "Logo must have adequate clear space",
+      "severity": "high"
+    },
+    {
+      "rule_id": "LOGO_004",
+      "description": "Logo must use approved colors only",
+      "severity": "high"
+    }
+  ]
+}

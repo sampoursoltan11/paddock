@@ -1,0 +1,27 @@
+# Image Analysis Agent Configuration
+
+name: image-analysis
+description: Analyzes images for visual compliance (logos, quality, brand colors)
+version: 1.0.0
+
+# Computer Vision settings
+computer_vision:
+  features:
+    - objects
+    - brands
+    - color
+    - image_type
+
+# GPT-4 Vision settings
+gpt4_vision:
+  model: gpt-4-vision
+  max_tokens: 1000
+  temperature: 0.3
+
+# Image quality thresholds
+quality_thresholds:
+  min_dpi_print: 300
+  min_dpi_digital: 150
+  min_dpi_web: 72
+  blur_threshold: 0.7
+  min_dimension_pixels: 100

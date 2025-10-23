@@ -1,0 +1,6 @@
+This is just a plain text file, not a PDF.
+
+It should be rejected during upload validation because
+the system only accepts PDF files.
+
+This file is used for testing file type validation.

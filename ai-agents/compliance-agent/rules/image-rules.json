@@ -1,0 +1,36 @@
+{
+  "image_compliance_rules": [
+    {
+      "rule_id": "IMG_001",
+      "category": "image_quality",
+      "severity": "high",
+      "title": "Image resolution must meet standards",
+      "description": "Images must meet minimum DPI requirements based on usage",
+      "check_type": "quality",
+      "requirements": {
+        "print": 300,
+        "digital": 150,
+        "web": 72
+      },
+      "remediation": "Replace with higher resolution images"
+    },
+    {
+      "rule_id": "IMG_002",
+      "category": "logo",
+      "severity": "critical",
+      "title": "Logo must be present and unmodified",
+      "description": "Toyota logo must appear correctly without modifications",
+      "check_type": "visual",
+      "remediation": "Add or correct Toyota logo"
+    },
+    {
+      "rule_id": "IMG_003",
+      "category": "color",
+      "severity": "high",
+      "title": "Brand colors must be used correctly",
+      "description": "Images should use Toyota brand colors appropriately",
+      "check_type": "color_analysis",
+      "remediation": "Adjust colors to match brand guidelines"
+    }
+  ]
+}

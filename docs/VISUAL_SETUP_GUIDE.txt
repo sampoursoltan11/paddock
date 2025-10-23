@@ -1,0 +1,280 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    SmartProof AI - Visual Setup Guide                     ║
+║                                                                            ║
+║  Follow this flowchart to set up SmartProof AI in 30 minutes             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 1: Prerequisites Check                                            │
+│                                                                          │
+│  ☐ Node.js 18+ installed       → node --version                        │
+│  ☐ npm 9+ installed             → npm --version                         │
+│  ☐ Azure CLI installed          → az --version                          │
+│  ☐ Functions Core Tools         → func --version                        │
+│  ☐ Azure subscription access    → az login                              │
+│                                                                          │
+│  If all checked → Continue to Step 2                                    │
+│  If missing → Install from docs/LOCAL_DEVELOPMENT_GUIDE.md              │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 2: Provision Azure Resources (15 minutes)                         │
+│                                                                          │
+│  Run: ./scripts/provision-azure-resources.sh dev                        │
+│                                                                          │
+│  This creates:                                                           │
+│  ┌─────────────────────────────────────────────────────────┐            │
+│  │  Azure Resources Created:                                │            │
+│  │  • Resource Group (smartproof-rg-dev)                   │            │
+│  │  • Storage Account (4 containers)                       │            │
+│  │  • Azure Functions                                      │            │
+│  │  • App Service                                          │            │
+│  │  • AI Search                                            │            │
+│  │  • Document Intelligence                                │            │
+│  │  • Computer Vision                                      │            │
+│  │  • Azure OpenAI (GPT-4 + GPT-4V)                       │            │
+│  │  • Application Insights                                 │            │
+│  └─────────────────────────────────────────────────────────┘            │
+│                                                                          │
+│  Output: config-dev.txt (contains ALL connection strings)                │
+│                                                                          │
+│  Cost: ~$235-450/month                                                   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 3: Install Dependencies (5 minutes)                               │
+│                                                                          │
+│  Run: ./scripts/setup-local.sh                                          │
+│                                                                          │
+│  This does:                                                              │
+│  ✓ npm install in frontend/                                             │
+│  ✓ npm install in backend/                                              │
+│  ✓ Creates frontend/.env (from .env.example)                            │
+│  ✓ Creates backend/local.settings.json (from .example)                  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 4: Configure Backend (3 minutes)                                  │
+│                                                                          │
+│  Open these two files side-by-side:                                     │
+│  ┌────────────────────────┐  ┌────────────────────────────────┐        │
+│  │  config-dev.txt        │  │  backend/local.settings.json   │        │
+│  │  (SOURCE)              │  │  (DESTINATION)                 │        │
+│  └────────────────────────┘  └────────────────────────────────┘        │
+│                                                                          │
+│  Copy these values:                                                      │
+│  config-dev.txt                    → local.settings.json                │
+│  ─────────────────────────────────────────────────────────────          │
+│  AZURE_STORAGE_CONNECTION_STRING   → AzureWebJobsStorage                │
+│  AZURE_STORAGE_CONNECTION_STRING   → AZURE_STORAGE_CONNECTION_STRING    │
+│  STORAGE_ACCOUNT_NAME               → AZURE_STORAGE_ACCOUNT_NAME        │
+│  AZURE_OPENAI_ENDPOINT              → AZURE_OPENAI_ENDPOINT             │
+│  AZURE_OPENAI_KEY                   → AZURE_OPENAI_KEY                  │
+│  AZURE_AI_SEARCH_ENDPOINT           → AZURE_AI_SEARCH_ENDPOINT          │
+│  AZURE_AI_SEARCH_KEY                → AZURE_AI_SEARCH_KEY               │
+│  AZURE_DOCUMENT_INTELLIGENCE_...    → AZURE_DOCUMENT_INTELLIGENCE_...   │
+│  AZURE_COMPUTER_VISION_...          → AZURE_COMPUTER_VISION_...         │
+│                                                                          │
+│  See WHERE_TO_CONFIGURE.md for exact mappings                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 5: Configure Frontend (2 minutes)                                 │
+│                                                                          │
+│  Edit: frontend/.env                                                    │
+│                                                                          │
+│  If provisioning script created Azure AD app:                           │
+│  ┌──────────────────────────────────────────────────────────┐          │
+│  │  Script output shows:                                     │          │
+│  │  VITE_AZURE_AD_CLIENT_ID=xxx-xxx-xxx                     │          │
+│  │  VITE_AZURE_AD_TENANT_ID=xxx-xxx-xxx                     │          │
+│  │                                                           │          │
+│  │  Copy to frontend/.env                                   │          │
+│  └──────────────────────────────────────────────────────────┘          │
+│                                                                          │
+│  OR manually create app in Azure Portal:                                │
+│  Azure Portal → Azure AD → App registrations → New                      │
+│  → Copy Client ID and Tenant ID                                         │
+│                                                                          │
+│  Also set:                                                               │
+│  VITE_AZURE_AD_REDIRECT_URI=http://localhost:3000                       │
+│  VITE_API_BASE_URL=http://localhost:7071/api                            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 6: Start Development Servers                                      │
+│                                                                          │
+│  ┌──────────────────────┐         ┌──────────────────────┐            │
+│  │  Terminal 1          │         │  Terminal 2          │            │
+│  ├──────────────────────┤         ├──────────────────────┤            │
+│  │  cd backend          │         │  cd frontend         │            │
+│  │  npm start           │         │  npm run dev         │            │
+│  │                      │         │                      │            │
+│  │  Output:             │         │  Output:             │            │
+│  │  Functions:          │         │  Local: localhost:   │            │
+│  │    upload-asset      │         │         3000         │            │
+│  │    search-product    │         │                      │            │
+│  │    ...               │         │                      │            │
+│  │                      │         │                      │            │
+│  │  Running on:         │         │                      │            │
+│  │  localhost:7071      │         │                      │            │
+│  └──────────────────────┘         └──────────────────────┘            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 7: Access Application                                             │
+│                                                                          │
+│  Open browser: http://localhost:3000                                    │
+│                                                                          │
+│  You should see:                                                         │
+│  ┌────────────────────────────────────────────────────────┐            │
+│  │                                                         │            │
+│  │  ╔══════════════════════════════════════════╗          │            │
+│  │  ║      SmartProof AI                       ║          │            │
+│  │  ║  Toyota Marketing Compliance             ║          │            │
+│  │  ╚══════════════════════════════════════════╝          │            │
+│  │                                                         │            │
+│  │              [ Sign in with Azure AD ]                 │            │
+│  │                                                         │            │
+│  └────────────────────────────────────────────────────────┘            │
+│                                                                          │
+│  Click "Sign in" → Login with Azure AD                                  │
+│                                                                          │
+│  After login, see:                                                       │
+│  • Dashboard (statistics)                                                │
+│  • Upload (drag-drop files)                                             │
+│  • Search (product info)                                                │
+│  • Compliance (review reports)                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STEP 8: Test Upload Flow                                               │
+│                                                                          │
+│  1. Navigate to "Upload Asset" page                                     │
+│  2. Drag a PDF file to upload area                                      │
+│  3. (Optional) Fill metadata: Model, Year, Category                     │
+│  4. Watch upload progress                                                │
+│                                                                          │
+│  Backend Terminal will show:                                             │
+│  ┌──────────────────────────────────────────────────────────┐          │
+│  │  [Orchestrator] Starting workflow orchestration          │          │
+│  │  [Parser] Starting document parsing                      │          │
+│  │  [Image Analysis] Analyzing images                       │          │
+│  │  [Search] Starting product information search            │          │
+│  │  [Compliance] Starting compliance checks                 │          │
+│  │  [Critic] Starting report generation                     │          │
+│  └──────────────────────────────────────────────────────────┘          │
+│                                                                          │
+│  5. Go to Dashboard → See upload                                        │
+│  6. Go to Compliance → See report (when ready)                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+╔════════════════════════════════════════════════════════════════════════════╗
+║                              ✅ SETUP COMPLETE!                            ║
+║                                                                            ║
+║  You now have:                                                             ║
+║  • Frontend running on http://localhost:3000                              ║
+║  • Backend running on http://localhost:7071                               ║
+║  • All Azure services provisioned                                         ║
+║  • 6 AI agents ready to process uploads                                   ║
+║  • Complete development environment                                       ║
+║                                                                            ║
+║  Next steps:                                                               ║
+║  1. Explore all pages in the UI                                           ║
+║  2. Upload sample documents                                               ║
+║  3. Review backend logs                                                   ║
+║  4. Check Azure Portal resources                                          ║
+║  5. Read code and make changes                                            ║
+║                                                                            ║
+║  Need help? See documentation:                                             ║
+║  • WHERE_TO_CONFIGURE.md - Configuration reference                        ║
+║  • docs/LOCAL_DEVELOPMENT_GUIDE.md - Detailed guide                       ║
+║  • BUILD_COMPLETE.md - What's been built                                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  TROUBLESHOOTING FLOWCHART                                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ❌ Problem: Backend won't start
+      ↓
+  ❓ Check: Do you have local.settings.json configured?
+      ↓
+  ✅ Solution: Copy values from config-dev.txt
+      ↓
+  ❓ Still failing? Check: Are connection strings valid?
+      ↓
+  ✅ Solution: Re-run provisioning script
+
+
+  ❌ Problem: Frontend won't start
+      ↓
+  ❓ Check: Did you run npm install?
+      ↓
+  ✅ Solution: cd frontend && npm install
+      ↓
+  ❓ Still failing? Check: Port 3000 available?
+      ↓
+  ✅ Solution: lsof -i :3000, kill -9 <PID>
+
+
+  ❌ Problem: Azure AD login fails
+      ↓
+  ❓ Check: Is redirect URI correct in Azure Portal?
+      ↓
+  ✅ Solution: Add http://localhost:3000 in Azure Portal
+      ↓
+  ❓ Still failing? Check: Client ID and Tenant ID correct?
+      ↓
+  ✅ Solution: Verify values in frontend/.env match Azure Portal
+
+
+  ❌ Problem: Can't connect to Azure services
+      ↓
+  ❓ Check: Are keys in local.settings.json correct?
+      ↓
+  ✅ Solution: Copy from config-dev.txt again
+      ↓
+  ❓ Still failing? Check: Did provisioning complete successfully?
+      ↓
+  ✅ Solution: Re-run provisioning script
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  QUICK COMMANDS REFERENCE                                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Setup:
+  ──────
+  ./scripts/provision-azure-resources.sh dev    # Provision Azure
+  ./scripts/setup-local.sh                       # Install dependencies
+
+  Development:
+  ────────────
+  cd backend && npm start                        # Start backend
+  cd frontend && npm run dev                     # Start frontend
+
+  Verification:
+  ─────────────
+  node --version                                 # Check Node.js
+  az account show                                # Check Azure login
+  curl http://localhost:7071/                    # Test backend
+  open http://localhost:3000                     # Open frontend
+
+  Azure:
+  ──────
+  az resource list --resource-group smartproof-rg-dev --output table
+  az storage container list --connection-string "<from-config>"
+  az ad app list --display-name smartproof-dev
+
+
+═══════════════════════════════════════════════════════════════════════════
+  END OF VISUAL SETUP GUIDE
+
+  For detailed text guides, see:
+  • START_HERE.md
+  • WHERE_TO_CONFIGURE.md
+  • docs/LOCAL_DEVELOPMENT_GUIDE.md
+═══════════════════════════════════════════════════════════════════════════

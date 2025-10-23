@@ -1,0 +1,29 @@
+# Parser Agent Configuration
+
+name: parser
+description: Extracts text, tables, and images from PDF documents using Azure Document Intelligence
+version: 1.0.0
+
+# Document Intelligence settings
+document_intelligence:
+  model: prebuilt-layout
+  features:
+    - text
+    - tables
+    - figures
+    - keyValuePairs
+
+# Image extraction settings
+image_extraction:
+  enabled: true
+  min_size_pixels: 100
+  formats:
+    - png
+    - jpg
+    - jpeg
+
+# Text extraction settings
+text_extraction:
+  preserve_formatting: true
+  include_page_numbers: true
+  detect_language: true

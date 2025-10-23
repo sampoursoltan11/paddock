@@ -1,0 +1,60 @@
+{
+  "legal_compliance_rules": [
+    {
+      "rule_id": "LEGAL_001",
+      "category": "legal",
+      "severity": "critical",
+      "title": "Disclaimers required for product claims",
+      "description": "All performance, efficiency, or safety claims must have visible disclaimers",
+      "check_type": "contextual",
+      "trigger_keywords": ["mpg", "horsepower", "hp", "safety", "rating", "award"],
+      "required_disclaimer_patterns": [
+        "\\*.*",
+        "\\[.*\\]",
+        "See.*details",
+        "Actual.*may vary"
+      ],
+      "remediation": "Add appropriate disclaimers near product claims"
+    },
+    {
+      "rule_id": "LEGAL_002",
+      "category": "legal",
+      "severity": "critical",
+      "title": "Vehicle shown disclaimer required",
+      "description": "Images of vehicles must include 'Vehicle shown with optional equipment' disclaimer",
+      "check_type": "presence",
+      "required_text": "Vehicle shown with optional equipment",
+      "variations": [
+        "Vehicle shown with optional equipment",
+        "Prototype shown with options",
+        "Shown with accessories"
+      ],
+      "remediation": "Add vehicle disclaimer to image captions"
+    },
+    {
+      "rule_id": "LEGAL_003",
+      "category": "legal",
+      "severity": "high",
+      "title": "Pricing must include disclaimers",
+      "description": "Any pricing information must include MSRP disclaimer",
+      "check_type": "contextual",
+      "trigger_keywords": ["$", "price", "msrp", "cost", "starting at"],
+      "required_text": "MSRP",
+      "remediation": "Add MSRP and pricing disclaimers"
+    },
+    {
+      "rule_id": "LEGAL_004",
+      "category": "legal",
+      "severity": "high",
+      "title": "Warranty information must be accurate",
+      "description": "Warranty claims must match official Toyota warranty terms",
+      "check_type": "accuracy",
+      "official_warranty": {
+        "basic": "3 years / 36,000 miles",
+        "powertrain": "5 years / 60,000 miles",
+        "corrosion": "5 years / unlimited miles"
+      },
+      "remediation": "Correct warranty information to match official terms"
+    }
+  ]
+}

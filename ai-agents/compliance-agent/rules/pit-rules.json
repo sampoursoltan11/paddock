@@ -1,0 +1,57 @@
+{
+  "product_information_accuracy_rules": [
+    {
+      "rule_id": "PIT_001",
+      "category": "pit",
+      "severity": "critical",
+      "title": "Model year must be accurate",
+      "description": "Model year mentioned must match the vehicle shown",
+      "check_type": "cross_reference",
+      "source": "product_database",
+      "remediation": "Correct model year to match official specifications"
+    },
+    {
+      "rule_id": "PIT_002",
+      "category": "pit",
+      "severity": "critical",
+      "title": "Engine specifications must be accurate",
+      "description": "Engine type, horsepower, and torque must match official specs",
+      "check_type": "accuracy",
+      "verify_fields": ["engine_type", "horsepower", "torque", "displacement"],
+      "tolerance": 0,
+      "remediation": "Update engine specifications to match official product database"
+    },
+    {
+      "rule_id": "PIT_003",
+      "category": "pit",
+      "severity": "high",
+      "title": "Fuel economy figures must be accurate",
+      "description": "MPG ratings must match EPA estimates",
+      "check_type": "accuracy",
+      "verify_fields": ["city_mpg", "highway_mpg", "combined_mpg"],
+      "tolerance": 1,
+      "source": "EPA",
+      "remediation": "Correct MPG ratings to match EPA estimates"
+    },
+    {
+      "rule_id": "PIT_004",
+      "category": "pit",
+      "severity": "high",
+      "title": "Standard features must be accurate",
+      "description": "Features listed as standard must be included in base trim",
+      "check_type": "feature_validation",
+      "source": "product_database",
+      "remediation": "Verify features against official trim specifications"
+    },
+    {
+      "rule_id": "PIT_005",
+      "category": "pit",
+      "severity": "medium",
+      "title": "Technology features must be current",
+      "description": "Technology and safety features must reflect current model year",
+      "check_type": "version_check",
+      "keywords": ["safety sense", "entune", "connected services"],
+      "remediation": "Update technology features to current versions"
+    }
+  ]
+}

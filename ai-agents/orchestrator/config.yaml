@@ -1,0 +1,28 @@
+# Orchestrator Agent Configuration
+
+name: orchestrator
+description: Coordinates the entire compliance checking workflow
+version: 1.0.0
+
+# Agent execution order
+workflow:
+  - parser
+  - image-analysis
+  - search
+  - compliance
+  - critic
+
+# Retry policy
+retry:
+  max_attempts: 3
+  delay_ms: 1000
+
+# Timeout settings
+timeout:
+  per_agent_seconds: 300  # 5 minutes per agent
+  total_seconds: 1800     # 30 minutes total
+
+# Failure handling
+on_failure:
+  continue_on_error: false
+  notify: true

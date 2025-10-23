@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Off-Brand Colors Test Image -->
+  <!-- These colors do NOT match official Toyota brand guidelines -->
+  <!-- Should trigger color compliance violations -->
+
+  <title>Off-Brand Colors (Non-Compliant)</title>
+
+  <!-- Background - Off-white -->
+  <rect width="800" height="600" fill="#F5F5F5"/>
+
+  <!-- Wrong Red (too bright) -->
+  <rect x="0" y="0" width="400" height="300" fill="#FF0000"/>
+  <text x="200" y="150" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Wrong Red</text>
+  <text x="200" y="180" font-family="Arial" font-size="16" fill="white" text-anchor="middle">#FF0000</text>
+  <text x="200" y="210" font-family="Arial" font-size="14" fill="white" text-anchor="middle">(Should be #EB0A1E)</text>
+
+  <!-- Purple (not in brand palette) -->
+  <rect x="400" y="0" width="400" height="300" fill="#800080"/>
+  <text x="600" y="150" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Purple</text>
+  <text x="600" y="180" font-family="Arial" font-size="16" fill="white" text-anchor="middle">#800080</text>
+  <text x="600" y="210" font-family="Arial" font-size="14" fill="white" text-anchor="middle">(Not in brand palette)</text>
+
+  <!-- Green (not in brand palette) -->
+  <rect x="0" y="300" width="400" height="300" fill="#00AA00"/>
+  <text x="200" y="450" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Green</text>
+  <text x="200" y="480" font-family="Arial" font-size="16" fill="white" text-anchor="middle">#00AA00</text>
+  <text x="200" y="510" font-family="Arial" font-size="14" fill="white" text-anchor="middle">(Not approved)</text>
+
+  <!-- Blue (not in brand palette) -->
+  <rect x="400" y="300" width="400" height="300" fill="#0000FF"/>
+  <text x="600" y="450" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Blue</text>
+  <text x="600" y="480" font-family="Arial" font-size="16" fill="white" text-anchor="middle">#0000FF</text>
+  <text x="600" y="510" font-family="Arial" font-size="14" fill="white" text-anchor="middle">(Not approved)</text>
+</svg>
