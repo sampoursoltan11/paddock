@@ -1,4 +1,4 @@
-# Smart AI - Marketing Compliance System
+# SmartProof AI - Marketing Compliance System
 
 > **🚀 New here? Start with [docs/START_HERE.md](docs/START_HERE.md) for a 30-minute quickstart!**
 
@@ -18,17 +18,16 @@ SmartProof is an AI-powered solution that automates Toyota's product information
 ### System Components
 1. **Frontend (React SPA)** - User interface for upload, search, and compliance review
 2. **Backend (Azure Functions)** - Serverless API orchestration
-3. **AI Agents (6 Total)** - Intelligent processing pipeline
+3. **AI Agents (5 Total)** - Intelligent processing pipeline
 4. **Data Layer** - Azure Blob Storage + AI Search
 5. **Infrastructure** - Azure Bicep IaC templates
 
 ### AI Agents
 1. **Orchestrator Agent** - Coordinates entire workflow
-2. **Search Agent** - Retrieval-Augmented Generation for product info
-3. **Parser Agent** - Extracts text, tables, and images from PDFs
-4. **Image Analysis Agent** - Visual compliance (logos, quality, brand colors)
-5. **Compliance Agent** - Rule-based checks (brand, legal, PIT)
-6. **Critic Agent** - Validates and summarizes results
+2. **Parser Agent** - Extracts text, tables, and images from PDFs using GPT-4o Vision
+3. **Image Analysis Agent** - Visual compliance (logos, quality, brand colors) using GPT-4o Vision
+4. **Compliance Agent** - Checks compliance against Australian standards using GPT-4o
+5. **Knowledge Base Builder Agent** - Indexes documents for search with AI metadata extraction
 
 ## Technology Stack
 
@@ -46,11 +45,11 @@ SmartProof is an AI-powered solution that automates Toyota's product information
 - Winston - Logging
 
 ### AI Services
-- Azure AI Foundry - Agent orchestration
-- Azure OpenAI - GPT-4 + GPT-4 Vision
-- Azure Document Intelligence - PDF processing
-- Azure AI Search - Product information index
-- Azure Computer Vision - Image analysis
+- Azure OpenAI - GPT-4o (with vision capabilities for document parsing and image analysis)
+- Azure OpenAI Embeddings - text-embedding-ada-002 (1536-dimensional vectors for semantic search)
+- Azure AI Search - Hybrid search index (keyword + semantic + vector)
+
+**Note:** GPT-4o handles all document parsing, image analysis, and metadata extraction.
 
 ### Infrastructure
 - Azure Bicep - Infrastructure as Code
@@ -73,6 +72,17 @@ smartproof-poc/
 
 ## 🚀 Quick Start
 
+**Option 1: One-Command Deploy (Recommended)**
+```bash
+# Complete deployment from scratch (20-25 min)
+./scripts/deploy-local.sh dev
+
+# Then start the servers:
+cd backend && npm start      # Terminal 1
+cd frontend && npm run dev   # Terminal 2
+```
+
+**Option 2: Manual Step-by-Step**
 ```bash
 # 1. Provision Azure resources (15 min)
 ./scripts/provision-azure-resources.sh dev
@@ -119,13 +129,13 @@ VITE_AZURE_AD_TENANT_ID=<your-tenant-id>
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AZURE_OPENAI_ENDPOINT": "<openai-endpoint>",
     "AZURE_OPENAI_KEY": "<openai-key>",
-    "AZURE_STORAGE_ACCOUNT": "<storage-account>",
+    "AZURE_OPENAI_DEPLOYMENT_GPT4": "gpt-4o",
+    "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-ada-002",
+    "AZURE_STORAGE_CONNECTION_STRING": "<storage-connection-string>",
+    "AZURE_STORAGE_ACCOUNT_NAME": "<storage-account>",
     "AZURE_AI_SEARCH_ENDPOINT": "<search-endpoint>",
     "AZURE_AI_SEARCH_KEY": "<search-key>",
-    "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT": "<doc-intel-endpoint>",
-    "AZURE_DOCUMENT_INTELLIGENCE_KEY": "<doc-intel-key>",
-    "AZURE_COMPUTER_VISION_ENDPOINT": "<vision-endpoint>",
-    "AZURE_COMPUTER_VISION_KEY": "<vision-key>"
+    "AZURE_AI_SEARCH_INDEX_NAME": "smartproof-product-info"
   }
 }
 ```
@@ -157,8 +167,10 @@ VITE_AZURE_AD_TENANT_ID=<your-tenant-id>
 
 ### PoC Capabilities
 - ✅ Upload PDF marketing materials
-- ✅ Extract text, tables, and images
-- ✅ AI-powered product information search
+- ✅ Extract text, tables, and images using GPT-4o Vision
+- ✅ AI-powered product information search with vector embeddings
+- ✅ Automatic knowledge base indexing with metadata extraction
+- ✅ Hybrid search (keyword + semantic + vector similarity)
 - ✅ Automated compliance checking (text + visual)
 - ✅ Logo detection and brand color verification
 - ✅ Image quality assessment
@@ -166,13 +178,21 @@ VITE_AZURE_AD_TENANT_ID=<your-tenant-id>
 - ✅ Role-based access control
 - ✅ Audit logging
 
+### Knowledge Base Features
+- ✅ **Automatic Indexing** - Documents indexed during compliance workflow
+- ✅ **AI Metadata Extraction** - GPT-4o extracts model, category, standards, certifications
+- ✅ **Vector Embeddings** - text-embedding-ada-002 (1536 dimensions)
+- ✅ **Hybrid Search** - Combines keyword, semantic, and vector similarity
+- ✅ **Natural Language Queries** - Search using plain English
+- ✅ **Relevance Scoring** - Smart ranking with semantic understanding
+
 ### Image Analysis (PoC)
-- Logo detection and positioning
+- Logo detection and positioning using GPT-4o Vision
 - Image quality checks (DPI, blur)
 - Brand color verification
 - Text extraction from images (OCR)
 - Object detection (vehicles, products)
-- GPT-4V brand guideline compliance
+- GPT-4o Vision brand guideline compliance
 
 ## Testing
 
@@ -189,11 +209,20 @@ npm run test:e2e
 
 ## Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [API Reference](docs/API.md)
-- [Image Analysis Guide](docs/IMAGE-ANALYSIS.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Development History](docs/HISTORY.md)
+### Getting Started
+- [🚀 Quick Start Guide](docs/START_HERE.md) - 30-minute setup walkthrough
+- [⚙️ Configuration Guide](docs/WHERE_TO_CONFIGURE.md) - Where to configure all settings
+- [💻 Local Development](docs/LOCAL_DEVELOPMENT_GUIDE.md) - Development environment setup
+- [📋 Setup Summary](docs/SETUP_SUMMARY.md) - Complete setup overview
+
+### Reference
+- [📖 Build Complete](docs/BUILD_COMPLETE.md) - Complete implementation summary
+- [📜 Development History](docs/HISTORY.md) - Project development timeline
+- [📊 Implementation Status](docs/IMPLEMENTATION_STATUS.md) - Feature completion status
+
+### Testing
+- [🧪 Test Suite](tests/README.md) - Comprehensive testing guide
+- [📦 Test Fixtures](tests/fixtures/README.md) - Test data and samples
 
 ## Security
 
