@@ -91,3 +91,5 @@ deployment-output.json
 *.backup
 backend/tmp/
 backend/var/
+backend/local.settings.json
+.claude/settings.local.json
