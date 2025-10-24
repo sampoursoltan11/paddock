@@ -17,10 +17,13 @@ lsof -ti :3000,:7071 2>/dev/null | xargs kill -9 2>/dev/null || true
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Create logs directory if it doesn't exist
+mkdir -p "$SCRIPT_DIR/logs"
+
 # Start backend in background
 echo "Starting backend on port 7071..."
 cd "$SCRIPT_DIR/backend"
-npm start > "$SCRIPT_DIR/backend.log" 2>&1 &
+npm start > "$SCRIPT_DIR/logs/backend.log" 2>&1 &
 BACKEND_PID=$!
 echo "Backend started with PID: $BACKEND_PID"
 
@@ -30,7 +33,7 @@ sleep 5
 # Start frontend in background
 echo "Starting frontend on port 3000..."
 cd "$SCRIPT_DIR/frontend"
-npm run dev > "$SCRIPT_DIR/frontend.log" 2>&1 &
+npm run dev > "$SCRIPT_DIR/logs/frontend.log" 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend started with PID: $FRONTEND_PID"
 
@@ -42,8 +45,8 @@ echo "Frontend PID: $FRONTEND_PID (port 3000)"
 echo "================================"
 echo ""
 echo "To view logs:"
-echo "  Backend:  tail -f backend.log"
-echo "  Frontend: tail -f frontend.log"
+echo "  Backend:  tail -f logs/backend.log"
+echo "  Frontend: tail -f logs/frontend.log"
 echo ""
 echo "To stop servers:"
 echo "  kill $BACKEND_PID $FRONTEND_PID"

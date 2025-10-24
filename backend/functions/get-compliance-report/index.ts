@@ -65,6 +65,8 @@ export async function getComplianceReport(
       },
       issues: complianceData.issues || [],
       timestamp: new Date().toISOString(),
+      reportUrl: '',
+      pdfReportUrl: '',
     };
 
     logger.info('Compliance report retrieved', {

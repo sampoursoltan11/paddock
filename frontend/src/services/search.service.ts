@@ -46,6 +46,13 @@ export const searchService = {
   getCategories: async (): Promise<ApiResponse<string[]>> => {
     return api.get<string[]>('/search/categories');
   },
+
+  /**
+   * Delete all indexed documents from the knowledge base
+   */
+  deleteAllDocuments: async (): Promise<ApiResponse<{ deletedCount: number }>> => {
+    return api.delete<{ deletedCount: number }>('/search/documents');
+  },
 };
 
 export default searchService;

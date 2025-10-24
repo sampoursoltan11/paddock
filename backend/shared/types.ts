@@ -152,6 +152,8 @@ export interface ComplianceReport {
     pagesProcessed: number;
     overallConfidence: number;
   };
+  issues?: ComplianceIssue[];
+  timestamp?: string;
   reportUrl: string;
   pdfReportUrl: string;
 }

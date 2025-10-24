@@ -24,6 +24,7 @@ export async function parserAgent(
   try {
     logger.info('Parser agent starting', { uploadId, blobUrl });
 
+    // With public blob access enabled, use blob URL directly
     // Use GPT-4o Vision to extract structured data from the document
     const result = await extractStructuredData(blobUrl);
 

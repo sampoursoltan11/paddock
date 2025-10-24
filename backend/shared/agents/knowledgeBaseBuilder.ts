@@ -1,14 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
-import { extractStructuredData } from '../vision';
 import {
   ProductDocument,
   indexProductDocument,
   ensureSearchIndex,
 } from '../knowledgeBase';
-import { getOpenAIClient } from '../openai';
+import { getOpenAIClient, analyzeDocument } from '../openai';
 
-const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME || 'gpt-4o';
+const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_GPT4 || 'gpt-4o';
 
 /**
  * Knowledge Base Builder Agent
@@ -22,9 +21,12 @@ export interface KnowledgeBaseResult {
 }
 
 /**
- * Extract product metadata from text using GPT-4o
+ * Extract comprehensive document content using GPT-4o Vision
+ * This analyzes both text and visual content directly from the document
  */
-async function extractProductMetadata(text: string): Promise<{
+async function extractDocumentContent(documentSasUrl: string, fileName: string): Promise<{
+  extractedText: string;
+  summary: string;
   model: string;
   year: string;
   category: string;
@@ -33,42 +35,51 @@ async function extractProductMetadata(text: string): Promise<{
   certifications?: string[];
   specifications?: Record<string, string>;
 }> {
-  const client = getOpenAIClient();
+  const analysisPrompt = `You are analyzing a document for a product information knowledge base.
 
-  const prompt = `You are a product information extraction specialist.
+Extract and provide the following information in a structured, human-readable format:
 
-Analyze the following product documentation and extract key metadata.
+1. **All Text Content**: Extract ALL text from the document, including:
+   - Headings, paragraphs, bullet points
+   - Tables and data (preserve structure)
+   - Captions, labels, and annotations
+   - Any fine print or disclaimers
+   - Brand names and logos visible in the document
 
-DOCUMENT TEXT:
-${text}
+2. **Visual Content**: Describe all images, diagrams, logos, and visual elements found in the document
+   - Pay special attention to brand logos (e.g., Toyota, Ford, etc.)
+   - Note any brand colors or styling
 
-Extract the following information:
-1. Product Model/Name
-2. Year (manufacture year or documentation year)
-3. Category (e.g., "Safety Equipment", "Industrial Tools", "Construction Equipment", etc.)
-4. Manufacturer name
-5. Australian/New Zealand Standards mentioned (e.g., AS/NZS 1892.1:1996)
-6. Certifications (e.g., ISO9001, CE marking)
-7. Key specifications (as key-value pairs)
+3. **Product Information**: Identify and extract:
+   - Manufacturer name (from logos, text, or visual branding)
+   - Product model/name (from text or visual elements)
+   - Year (from document or visual year indicators)
+   - Product category (e.g., "Vehicles", "Safety Equipment", "Industrial Tools")
+   - Australian/New Zealand Standards (e.g., AS/NZS 1892.1:1996)
+   - Certifications (e.g., ISO9001, CE marking)
+   - Key specifications (dimensions, weight, capacity, etc.)
+
+4. **Human-Readable Summary**: Create a 2-3 sentence natural summary that would help someone quickly understand what this document is about. Write as if explaining to a colleague. Include the brand/manufacturer name if known.
 
 Return ONLY valid JSON in this exact format:
 {
-  "model": "product model or name",
+  "extractedText": "Full text content extracted from the document...",
+  "visualContent": "Description of all visual elements found...",
+  "summary": "Natural, human-readable summary of the document...",
+  "model": "Product model or name",
   "year": "YYYY",
-  "category": "product category",
-  "manufacturer": "manufacturer name",
+  "category": "Product category",
+  "manufacturer": "Manufacturer name or null",
   "standards": ["AS/NZS 1892.1:1996", ...],
   "certifications": ["ISO9001", ...],
   "specifications": {
-    "height": "2.4m",
-    "weight": "5kg",
-    ...
+    "key": "value"
   }
 }
 
-If any field is not found, use reasonable defaults:
+If any field is not found, use:
 - model: "Unknown Model"
-- year: current year
+- year: "${new Date().getFullYear()}"
 - category: "General Product"
 - manufacturer: null
 - standards: []
@@ -76,51 +87,73 @@ If any field is not found, use reasonable defaults:
 - specifications: {}`;
 
   try {
-    const response = await client.chat.completions.create({
-      model: deploymentName,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.1,
+    logger.info('Analyzing document with GPT-4o Vision (PDF→PNG if needed)', { fileName });
+
+    // Use analyzeDocument which handles PDF→PNG conversion automatically
+    const analysisResult = await analyzeDocument(documentSasUrl, analysisPrompt);
+
+    // Try to parse as JSON (response_format not available with analyzeDocument)
+    let parsed;
+    try {
+      // Strip markdown code fences if present
+      let jsonText = analysisResult.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
+      }
+      parsed = JSON.parse(jsonText);
+    } catch (parseError) {
+      logger.warn('GPT-4o did not return valid JSON, using fallback', { error: parseError });
+      // If parsing fails, create a basic structure
+      parsed = {
+        extractedText: analysisResult,
+        visualContent: '',
+        summary: 'Document analyzed',
+        model: 'Unknown Model',
+        year: new Date().getFullYear().toString(),
+        category: 'General Product',
+      };
+    }
+
+    logger.info('Document analysis completed', {
+      fileName,
+      textLength: parsed.extractedText?.length || 0,
+      model: parsed.model,
+      category: parsed.category,
     });
 
-    const content = response.choices[0]?.message?.content || '{}';
-    const metadata = JSON.parse(content);
-
-    logger.info('Product metadata extracted', { metadata });
+    // Combine extracted text with visual content description
+    const fullText = `${parsed.extractedText || ''}\n\nVISUAL CONTENT:\n${parsed.visualContent || ''}`.trim();
 
     return {
-      model: metadata.model || 'Unknown Model',
-      year: metadata.year || new Date().getFullYear().toString(),
-      category: metadata.category || 'General Product',
-      manufacturer: metadata.manufacturer || undefined,
-      standards: metadata.standards || [],
-      certifications: metadata.certifications || [],
-      specifications: metadata.specifications || {},
+      extractedText: fullText,
+      summary: parsed.summary || 'Document content extracted',
+      model: parsed.model || 'Unknown Model',
+      year: parsed.year || new Date().getFullYear().toString(),
+      category: parsed.category || 'General Product',
+      manufacturer: parsed.manufacturer || undefined,
+      standards: parsed.standards || [],
+      certifications: parsed.certifications || [],
+      specifications: parsed.specifications || {},
     };
   } catch (error) {
-    logger.error('Error extracting product metadata', {
+    logger.error('Error analyzing document', {
+      fileName,
       error: error instanceof Error ? error.message : 'Unknown error',
     });
 
-    // Return defaults on error
-    return {
-      model: 'Unknown Model',
-      year: new Date().getFullYear().toString(),
-      category: 'General Product',
-      standards: [],
-      certifications: [],
-      specifications: {},
-    };
+    throw error;
   }
 }
 
 /**
- * Generate a concise product title from metadata and text
+ * Generate a concise product title from metadata and summary
  */
 async function generateProductTitle(
   model: string,
   category: string,
-  textSnippet: string
+  summary: string
 ): Promise<string> {
   const client = getOpenAIClient();
 
@@ -128,8 +161,9 @@ async function generateProductTitle(
 
 Model: ${model}
 Category: ${category}
-Context: ${textSnippet.substring(0, 500)}
+Summary: ${summary}
 
+Create a title that would be helpful for someone searching this knowledge base.
 Return only the title, nothing else.`;
 
   try {
@@ -156,7 +190,7 @@ Return only the title, nothing else.`;
 
 /**
  * Knowledge Base Builder Agent
- * Processes a document and adds it to the knowledge base
+ * Processes a document and adds it to the knowledge base using GPT-4o Vision
  */
 export async function knowledgeBaseBuilderAgent(
   uploadId: string,
@@ -169,50 +203,51 @@ export async function knowledgeBaseBuilderAgent(
     // Ensure the search index exists
     await ensureSearchIndex();
 
-    // Extract text and structured data from the document
-    const extractedData = await extractStructuredData(blobUrl);
+    // With public blob access enabled, use blob URL directly
+    // Use GPT-4o Vision to analyze the document (works for both PDFs and images)
+    const documentData = await extractDocumentContent(blobUrl, fileName);
 
-    if (!extractedData.extractedText || extractedData.extractedText.trim().length === 0) {
-      logger.warn('No text extracted from document', { uploadId, fileName });
+    if (!documentData.extractedText || documentData.extractedText.trim().length === 0) {
+      logger.warn('No content extracted from document', { uploadId, fileName });
       return {
         success: false,
         documentsIndexed: 0,
-        error: 'No text could be extracted from the document',
+        error: 'No content could be extracted from the document',
       };
     }
 
-    logger.info('Text extracted from document', {
+    logger.info('Document content extracted', {
       uploadId,
-      textLength: extractedData.extractedText.length,
+      textLength: documentData.extractedText.length,
+      model: documentData.model,
+      category: documentData.category,
     });
-
-    // Extract product metadata using GPT-4o
-    const metadata = await extractProductMetadata(extractedData.extractedText);
 
     // Generate a product title
     const title = await generateProductTitle(
-      metadata.model,
-      metadata.category,
-      extractedData.extractedText
+      documentData.model,
+      documentData.category,
+      documentData.summary
     );
 
     // Create product document for indexing
     const productDocument: ProductDocument = {
       id: uuidv4(),
       title,
-      content: extractedData.extractedText,
-      model: metadata.model,
-      year: metadata.year,
-      category: metadata.category,
+      content: documentData.extractedText,
+      model: documentData.model,
+      year: documentData.year,
+      category: documentData.category,
       source: fileName,
       uploadId,
       fileName,
       extractedAt: new Date().toISOString(),
       metadata: {
-        manufacturer: metadata.manufacturer,
-        standards: metadata.standards,
-        certifications: metadata.certifications,
-        specifications: metadata.specifications,
+        manufacturer: documentData.manufacturer,
+        standards: documentData.standards,
+        certifications: documentData.certifications,
+        specifications: documentData.specifications,
+        summary: documentData.summary, // Add human-readable summary for search results
       },
     };
 
@@ -222,8 +257,8 @@ export async function knowledgeBaseBuilderAgent(
     logger.info('Knowledge base builder agent completed', {
       uploadId,
       documentId: productDocument.id,
-      model: metadata.model,
-      category: metadata.category,
+      model: documentData.model,
+      category: documentData.category,
     });
 
     return {

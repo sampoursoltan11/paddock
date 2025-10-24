@@ -31,6 +31,7 @@ export interface ProductDocument {
     standards?: string[];
     certifications?: string[];
     specifications?: Record<string, string>;
+    summary?: string; // Human-readable summary for search results
   };
 }
 
@@ -254,6 +255,50 @@ export async function deleteProductDocument(documentId: string): Promise<void> {
     logger.error('Error deleting product document', {
       error: error instanceof Error ? error.message : 'Unknown error',
       documentId,
+    });
+    throw error;
+  }
+}
+
+/**
+ * Delete all documents from the index
+ */
+export async function deleteAllDocuments(): Promise<number> {
+  try {
+    logger.info('Deleting all documents from index', { indexName });
+
+    const searchClient = new SearchClient(
+      searchEndpoint,
+      indexName,
+      new AzureKeyCredential(searchKey)
+    );
+
+    // First, get all document IDs
+    const searchResults = await searchClient.search('*', {
+      select: ['id'],
+      top: 1000, // Get up to 1000 documents
+    });
+
+    const documentIds: string[] = [];
+    for await (const result of searchResults.results) {
+      const doc = result.document as any;
+      documentIds.push(doc.id);
+    }
+
+    if (documentIds.length === 0) {
+      logger.info('No documents to delete');
+      return 0;
+    }
+
+    // Delete all documents
+    const documentsToDelete = documentIds.map(id => ({ id }));
+    await searchClient.deleteDocuments(documentsToDelete);
+
+    logger.info('All documents deleted from index', { count: documentIds.length });
+    return documentIds.length;
+  } catch (error) {
+    logger.error('Error deleting all documents', {
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     throw error;
   }

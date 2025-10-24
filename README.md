@@ -58,16 +58,24 @@ SmartProof is an AI-powered solution that automates Toyota's product information
 
 ## Project Structure
 
+For a detailed directory structure and organization, see [DIRECTORY-STRUCTURE.md](DIRECTORY-STRUCTURE.md)
+
 ```
-smartproof-poc/
-├── frontend/              # React SPA
-├── backend/               # Azure Functions
-├── ai-agents/             # 6 AI agents
-├── infrastructure/        # Bicep templates
-├── scripts/               # Deployment scripts
-├── .github/workflows/     # CI/CD pipelines
-├── docs/                  # Documentation
-└── tests/                 # Integration tests
+paddock/
+├── README.md                   # This file
+├── DIRECTORY-STRUCTURE.md      # Detailed directory structure
+├── start-servers.sh           # Start backend and frontend servers
+├── backend/                   # Azure Functions backend
+├── frontend/                  # React SPA
+├── ai-agents/                 # AI agent implementations
+├── infrastructure/            # Bicep IaC templates
+├── scripts/                   # Utility and deployment scripts
+│   └── test-scripts/          # Test automation scripts
+├── tests/                     # End-to-end tests
+├── docs/                      # Documentation
+│   └── test-results/          # Test reports and results
+├── logs/                      # Application logs (gitignored)
+└── test-documents/            # Sample PDFs for testing
 ```
 
 ## 🚀 Quick Start

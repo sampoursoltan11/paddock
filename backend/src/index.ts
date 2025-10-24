@@ -9,3 +9,4 @@ import '../functions/process-asset';
 import '../functions/search-product';
 import '../functions/get-compliance-report';
 import '../functions/download-report';
+import '../functions/delete-documents';

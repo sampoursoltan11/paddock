@@ -1,5 +1,9 @@
 import { AzureOpenAI } from 'openai';
 import { logger } from './utils/logger';
+import { pdfToPng } from 'pdf-to-png-converter';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT || '';
 const apiKey = process.env.AZURE_OPENAI_KEY || '';
@@ -21,38 +25,98 @@ export function getOpenAIClient(): AzureOpenAI {
 
 /**
  * Analyze document (PDF or image) using GPT-4o Vision
+ * Converts PDFs to PNG images first, then analyzes with Vision API
  */
 export async function analyzeDocument(documentUrl: string, prompt: string) {
   try {
-    logger.info('Analyzing document with GPT-4o', { documentUrl });
+    logger.info('Analyzing document with GPT-4o Vision', { documentUrl });
 
-    const response = await client.chat.completions.create({
-      model: deploymentName,
-      messages: [
-        {
+    const isPDF = documentUrl.toLowerCase().includes('.pdf');
+
+    if (isPDF) {
+      // Download PDF to temp file
+      logger.info('Downloading PDF for conversion to images');
+      const fetchResponse = await fetch(documentUrl);
+      if (!fetchResponse.ok) {
+        throw new Error(`Failed to download PDF: ${fetchResponse.statusText}`);
+      }
+
+      const arrayBuffer = await fetchResponse.arrayBuffer();
+      const tempDir = os.tmpdir();
+      const pdfPath = path.join(tempDir, `pdf-${Date.now()}.pdf`);
+      const outputDir = path.join(tempDir, `pdf-images-${Date.now()}`);
+
+      fs.writeFileSync(pdfPath, Buffer.from(arrayBuffer));
+      logger.info('PDF downloaded, converting to PNG images', {
+        sizeKB: Math.round(arrayBuffer.byteLength / 1024),
+      });
+
+      // Convert PDF pages to PNG images
+      // disableFontFace: true fixes font rendering issues - fonts now render as actual text instead of placeholder boxes
+      const pngPages = await pdfToPng(pdfPath, {
+        outputFolder: outputDir,
+        disableFontFace: true,
+        viewportScale: 2.0, // Higher resolution
+      });
+
+      logger.info(`Converted PDF to ${pngPages.length} PNG images`);
+
+      // Analyze each page with Vision API
+      const pageAnalyses: string[] = [];
+      for (let i = 0; i < pngPages.length; i++) {
+        const pagePath = pngPages[i].path;
+        const base64Image = fs.readFileSync(pagePath).toString('base64');
+        const dataUrl = `data:image/png;base64,${base64Image}`;
+
+        logger.info(`Analyzing page ${i + 1}/${pngPages.length}`);
+
+        const response = await client.chat.completions.create({
+          model: deploymentName,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: `${prompt}\n\n[This is page ${i + 1} of ${pngPages.length}]` },
+              { type: 'image_url', image_url: { url: dataUrl } },
+            ],
+          }],
+          max_tokens: 4000,
+          temperature: 0.1,
+        });
+
+        const pageResult = response.choices[0]?.message?.content || '';
+        pageAnalyses.push(`Page ${i + 1}:\n${pageResult}`);
+      }
+
+      // Cleanup temp files
+      try {
+        fs.unlinkSync(pdfPath);
+        fs.rmSync(outputDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        logger.warn('Failed to cleanup temp files', { error: cleanupError });
+      }
+
+      const result = pageAnalyses.join('\n\n---\n\n');
+      logger.info('PDF analysis completed', { pages: pngPages.length, contentLength: result.length });
+      return result;
+    } else {
+      // For images, use URL directly
+      const response = await client.chat.completions.create({
+        model: deploymentName,
+        messages: [{
           role: 'user',
           content: [
             { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: { url: documentUrl },
-            },
+            { type: 'image_url', image_url: { url: documentUrl } },
           ],
-        },
-      ],
-      max_tokens: 4000,
-      temperature: 0.1,
-    });
+        }],
+        max_tokens: 4000,
+        temperature: 0.1,
+      });
 
-    const result = response.choices[0]?.message?.content || '';
-
-    logger.info('Document analysis completed', {
-      documentUrl,
-      contentLength: result.length,
-    });
-
-    return result;
-
+      const result = response.choices[0]?.message?.content || '';
+      logger.info('Image analysis completed', { contentLength: result.length });
+      return result;
+    }
   } catch (error) {
     logger.error('Error analyzing document', {
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -99,7 +163,15 @@ Return the data in this exact JSON structure:
 
     // Try to parse as JSON
     try {
-      return JSON.parse(result);
+      // Strip markdown code fences if present
+      let jsonText = result.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
+      }
+
+      return JSON.parse(jsonText);
     } catch {
       // If not valid JSON, return structured placeholder
       logger.warn('GPT-4o did not return valid JSON, using fallback structure');
